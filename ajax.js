@@ -16,7 +16,7 @@ $(document).ready(function() {
                         <div id="clientContainer">
                             <div class="client-card">
                                 <div class="d-flex align-items-center p-3">
-                                    <img src="/${client.photo}" alt="${client.prenom} ${client.nom}" class="client-img">
+                                    <img src="${client.photo}" alt="${client.prenom} ${client.nom}" class="client-img">
                                     <div class="client-info ms-3 flex-grow-1">
                                         <h5 class="client-name mb-1">${client.prenom} ${client.nom}</h5>
                                         <a href="tel:${client.numtel}" class="client-phone">${client.numtel}</a>
@@ -46,18 +46,18 @@ $(document).ready(function() {
     }
 
     loadClients();
-
     $('#addClientForm').on('submit', function(event) {
         event.preventDefault();
         var formData = new FormData(this);
-    
-        // Debugging: Log FormData content
-        for (var pair of formData.entries()) {
-            console.log(pair[0] + ': ' + (pair[1] instanceof File ? '[File]' : pair[1]));
+        var clientId = $('#addClientForm').attr('data-id');
+        var url = clientId ? 'controllers/updateClient-controller.php' : 'controllers/addClient-controller.php';
+        
+        if (clientId) {
+            formData.append('id', clientId);
         }
     
         $.ajax({
-            url: 'controllers/addClient-controller.php', // Send data to the controller
+            url: url,
             type: 'POST',
             data: formData,
             contentType: false,
@@ -68,26 +68,31 @@ $(document).ready(function() {
                     var notification = $('#notification');
                     if (res.status === 'success') {
                         notification.removeClass('alert-danger').addClass('alert-success').text(res.message).show();
-                        $('#addClientForm')[0].reset(); // Reset form after success
-                        $('#dragDropZone').text('Glissez-déposez ou cliquez pour télécharger'); // Reset the drag-drop zone text
-                        loadClients(); // Reload the client list
+                        $('#addClientForm')[0].reset();
+                        $('#addClientForm').removeAttr('data-id');
+                        $('.ajouter').text('Ajouter');
+                        $('#dragDropZone').text('Glissez-déposez ou cliquez pour télécharger');
+                        loadClients();
                     } else {
                         notification.removeClass('alert-success').addClass('alert-danger').text(res.message).show();
                     }
                     setTimeout(function() {
                         notification.fadeOut();
-                    }, 5000); // Hide notification after 5 seconds
+                    }, 5000);
                 } catch (e) {
                     console.error('Error parsing JSON response:', e);
                     console.log('Response:', response);
-                    $('#notification').removeClass('alert-success').addClass('alert-danger').text('Erreur lors de l’ajout du client.').show();
-                    setTimeout(function() {
-                        $('#notification').fadeOut();
-                    }, 5000); // Hide notification after 5 seconds
+                    $('#notification').removeClass('alert-success').addClass('alert-danger').text("Erreur lors de l'opération.").show();
+setTimeout(function() {
+    $('#notification').fadeOut();
+}, 5000); 
                 }
             }
         });
     });
+    loadClients();
+
+    
     
 
     // Delete Client
@@ -145,7 +150,7 @@ $(document).ready(function() {
                 $('#errorModal').modal('show');
             }
         });
-
+    
         loadClients();
     });
 });
