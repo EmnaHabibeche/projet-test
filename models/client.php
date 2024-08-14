@@ -1,125 +1,155 @@
-<?php
-class Client {
-    private $conn;
-    private $table_name = "client";
+    <?php
+    class Client {
+        private $conn;
+        private $table_name = "client";
 
-    public $id;
-    public $prenom;
-    public $nom;
-    public $numtel;
-    public $pays;
-    public $photo;
+        public $id;
+        public $prenom;
+        public $nom;
+        public $numtel;
+        public $pays;
+        public $photo;
 
-    public function __construct($db) {
-        $this->conn = $db;
-    }
+        public function __construct($db) {
+            $this->conn = $db;
+        }
+        public function create() {
+            $query = "INSERT INTO client (prenom, nom, numtel, pays) VALUES (:prenom, :nom, :numtel, :pays)";
+            $stmt = $this->conn->prepare($query);
+        
+            // Bind parameters
+            $stmt->bindParam(':prenom', $this->prenom);
+            $stmt->bindParam(':nom', $this->nom);
+            $stmt->bindParam(':numtel', $this->numtel);
+            $stmt->bindParam(':pays', $this->pays);
+        
+            // Execute the query
+            try {
+                if ($stmt->execute()) {
+                    $this->id = $this->conn->lastInsertId();
+                    return $this->id;
+                }
+            } catch (PDOException $e) {
+                error_log("Database error: " . $e->getMessage());
+                return false;
+            }
+        
+            return false;
+        }
+        public function uploadPhoto($file, $clientId) {
+            // Define the upload directory
+            $target_dir = "../resources/clients/" . $clientId . "/";
+        
+            // Create the directory if it doesn't exist
+            if (!is_dir($target_dir)) {
+                if (!mkdir($target_dir, 0777, true)) {
+                    error_log("Failed to create directory: " . $target_dir);
+                    return null;
+                }
+                error_log("Directory created: " . $target_dir);
+            }
+        
+            // Define the target file path
+            $target_file = $target_dir . basename($file["name"]);
+        
+            // Attempt to move the uploaded file to the target directory
+            if (move_uploaded_file($file["tmp_name"], $target_file)) {
+                error_log("File moved to: " . $target_file);
+                // Return the relative path to store in the database
+                return "resources/clients/" . $clientId . "/" . basename($file["name"]);
+            } else {
+                error_log("Failed to move uploaded file to: " . $target_file);
+                return null;
+            }
+        }
+        
+        public function updatePhoto($clientId) {
+            $query = "UPDATE client SET photo = :photo WHERE id = :id";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':photo', $this->photo);
+            $stmt->bindParam(':id', $clientId);
+            return $stmt->execute();
+        }
 
-    public function create() {
-        $checkQuery = "SELECT COUNT(*) FROM " . $this->table_name . " WHERE prenom = :prenom AND nom = :nom AND numtel = :numtel";
-        $checkStmt = $this->conn->prepare($checkQuery);
-        $checkStmt->bindParam(':prenom', $this->prenom);
-        $checkStmt->bindParam(':nom', $this->nom);
-        $checkStmt->bindParam(':numtel', $this->numtel);
-        $checkStmt->execute();
-        $exists = $checkStmt->fetchColumn();
+        
 
-        if ($exists > 0) {
-            echo json_encode(['status' => 'error', 'message' => 'Client déjà existe']);
+        public function update() {
+            $query = "UPDATE " . $this->table_name . " 
+                      SET prenom = :prenom, nom = :nom, numtel = :numtel, pays = :pays";
+            
+            // Only include photo in the update if it's set
+            if ($this->photo) {
+                $query .= ", photo = :photo";
+            }
+            
+            $query .= " WHERE id = :id";
+            
+            $stmt = $this->conn->prepare($query);
+        
+            $stmt->bindParam(':prenom', $this->prenom);
+            $stmt->bindParam(':nom', $this->nom);
+            $stmt->bindParam(':numtel', $this->numtel);
+            $stmt->bindParam(':pays', $this->pays);
+            $stmt->bindParam(':id', $this->id);
+            
+            if ($this->photo) {
+                $stmt->bindParam(':photo', $this->photo);
+            }
+        
+            if ($stmt->execute()) {
+                return true;
+            }
             return false;
         }
 
-        $query = "INSERT INTO " . $this->table_name . " (prenom, nom, numtel, pays, photo) VALUES (:prenom, :nom, :numtel, :pays, '')";
-        $stmt = $this->conn->prepare($query);
+        public function delete() {
+            $query = "DELETE FROM " . $this->table_name . " WHERE id = :id";
+            $stmt = $this->conn->prepare($query);
 
-        $stmt->bindParam(':prenom', $this->prenom);
-        $stmt->bindParam(':nom', $this->nom);
-        $stmt->bindParam(':numtel', $this->numtel);
-        $stmt->bindParam(':pays', $this->pays);
+            $stmt->bindParam(':id', $this->id);
 
-        if ($stmt->execute()) {
-            // Get the last inserted ID
-            $this->id = $this->conn->lastInsertId();
-            echo json_encode(['status' => 'success', 'message' => 'Client ajouté avec succès']);
-            return true;
+            if ($stmt->execute()) {
+                return true;
+            }
+            return false;
         }
 
-        echo json_encode(['status' => 'error', 'message' => 'Erreur lors de l\'ajout du client']);
-        return false;
-    }
-
-    public function get() {
-        $query = "SELECT * FROM " . $this->table_name . " ORDER BY id DESC";
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-
-        return $stmt;
-    }
-
-    public function update() {
-        $query = "UPDATE " . $this->table_name . " SET prenom = :prenom, nom = :nom, numtel = :numtel, pays = :pays, photo = :photo WHERE id = :id";
-        $stmt = $this->conn->prepare($query);
-
-        $stmt->bindParam(':prenom', $this->prenom);
-        $stmt->bindParam(':nom', $this->nom);
-        $stmt->bindParam(':numtel', $this->numtel);
-        $stmt->bindParam(':pays', $this->pays);
-        $stmt->bindParam(':photo', $this->photo);
-        $stmt->bindParam(':id', $this->id);
-
-        if ($stmt->execute()) {
-            return true;
+        
+        
+        
+        public function getClientById() {
+            $query = "SELECT * FROM " . $this->table_name . " WHERE id = :id";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':id', $this->id);
+            $stmt->execute();
+            return $stmt->fetch(PDO::FETCH_ASSOC);
         }
-        return false;
-    }
-
-    public function delete() {
-        $query = "DELETE FROM " . $this->table_name . " WHERE id = :id";
-        $stmt = $this->conn->prepare($query);
-
-        $stmt->bindParam(':id', $this->id);
-
-        if ($stmt->execute()) {
-            return true;
+        
+        public function readSingle() {
+            $query = "SELECT id, prenom, nom, numtel, pays, photo FROM " . $this->table_name . " WHERE id = :id";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':id', $this->id);
+            $stmt->execute();
+        
+            return $stmt->fetch(PDO::FETCH_ASSOC);
         }
-        return false;
-    }
-
-    public function updatePhoto($id) {
-        $query = "UPDATE " . $this->table_name . " SET photo = :photo WHERE id = :id";
-        $stmt = $this->conn->prepare($query);
-
-        $stmt->bindParam(':photo', $this->photo);
-        $stmt->bindParam(':id', $id);
-
-        return $stmt->execute();
-    }
-    public function getClientById() {
-        $query = "SELECT * FROM " . $this->table_name . " WHERE id = :id";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id', $this->id);
-        $stmt->execute();
-        return $stmt->fetch(PDO::FETCH_ASSOC);
-    }
+        
+        public function readAll() {
+            $query = "SELECT id, prenom, nom, numtel, pays, photo FROM " . $this->table_name;
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute();
+        
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }  
     
-    public function readSingle() {
-        $query = "SELECT id, prenom, nom, numtel, pays, photo FROM " . $this->table_name . " WHERE id = :id";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id', $this->id);
-        $stmt->execute();
-
-        $client = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $client;
+        
+        
+        
     }
 
-    public function readAll() {
-        $query = "SELECT id, prenom, nom, numtel, pays, photo FROM " . $this->table_name;
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
 
-        $clients = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        return $clients;
-    }
     
-}
+    
+
 
 ?>

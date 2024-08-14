@@ -1,51 +1,61 @@
 $(document).ready(function() {
-    // Function to load and display clients in the table
     function loadClients() {
         $.ajax({
             url: 'controllers/getClient-controller.php',
             type: 'GET',
+            dataType: 'json',
             success: function(response) {
-                try {
-                    var clients = JSON.parse(response);
+                console.log('Raw Response:', response); // Debugging line
+                if (Array.isArray(response)) {
+                    console.log('Parsed Clients Data:', response); // Debugging line
                     var clientList = $('#clientList');
                     clientList.empty();
-    
-                    clients.forEach(function(client) {
+            
+                    response.forEach(function(client) {
                         var clientCard = `
                         <div id="clientContainer">
                             <div class="client-card">
                                 <div class="d-flex align-items-center p-3">
-                                    <img src="resources/${client.photo}" alt="${client.prenom} ${client.nom}" class="client-img">
+                                    <img src="/${client.photo}" alt="${client.prenom} ${client.nom}" class="client-img">
                                     <div class="client-info ms-3 flex-grow-1">
                                         <h5 class="client-name mb-1">${client.prenom} ${client.nom}</h5>
                                         <a href="tel:${client.numtel}" class="client-phone">${client.numtel}</a>
                                     </div>
-                                     <div class="client-actions">
-                                <i class="fa-regular fa-pen-to-square editClientIcon" data-id="${client.id}"></i>
-                                <i class="fa-regular fa-trash-can deleteClientIcon" data-id="${client.id}"></i>
-                            </div>
+                                    <div class="client-actions">
+                                        <i class="fa-regular fa-pen-to-square editClientIcon" data-id="${client.id}"></i>
+                                        <i class="fa-regular fa-trash-can deleteClientIcon" data-id="${client.id}"></i>
+                                    </div>
                                 </div>
-                            </div> </div>
-                `;
+                            </div>
+                        </div>
+                        `;
                         clientList.append(clientCard);
                     });
-                } catch (e) {
-                    console.error('Error parsing JSON response:', e);
-                    console.log('Response:', response);
+                } else {
+                    console.error('Expected an array but got:', response);
                 }
+            },
+            
+            error: function(xhr, status, error) {
+                console.log('Response Text:', xhr.responseText);
+                console.log('Status Code:', xhr.status);
+                console.log('Status Text:', xhr.statusText);
+                console.error('AJAX Error:', status, error);
             }
         });
     }
-    
-    
-    // Initially load all clients when the page loads
+
     loadClients();
 
-    // Add Client
     $('#addClientForm').on('submit', function(event) {
         event.preventDefault();
         var formData = new FormData(this);
-
+    
+        // Debugging: Log FormData content
+        for (var pair of formData.entries()) {
+            console.log(pair[0] + ': ' + (pair[1] instanceof File ? '[File]' : pair[1]));
+        }
+    
         $.ajax({
             url: 'controllers/addClient-controller.php', // Send data to the controller
             type: 'POST',
@@ -78,9 +88,10 @@ $(document).ready(function() {
             }
         });
     });
+    
 
     // Delete Client
-    $(document).on('click', '.deleteClientBtn', function() {
+    $(document).on('click', '.deleteClientIcon', function() {
         var id = $(this).data('id');
 
         $.ajax({
@@ -112,18 +123,31 @@ $(document).ready(function() {
         });
     });
 
-    // Edit Client
-    $(document).on('click', '.editClientBtn', function() {
+    $(document).on('click', '.editClientIcon', function() {
         var id = $(this).data('id');
-
         $.ajax({
-            url: 'controllers/getClient-controller.php', // Get client data
-            type: 'POST',
-            data: {id: id},
-            success: function(response) {
-                // You can use this response to populate an edit form
-                console.log(response);
+            url: 'controllers/getClient-controller.php',
+            type: 'GET',
+            data: { id: id },
+            dataType: 'json',
+            success: function(client) {
+                $('#prenom').val(client.prenom);
+                $('#nom').val(client.nom);
+                $('#numtel').val(client.numtel);
+                $('#pays').val(client.pays);
+                $('#addClientForm').attr('data-id', client.id);
+                $('.ajouter').text('Mettre à jour');
+                $('.nav-link[href="#addClient"]').tab('show');
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX Error:', status, error);
+                $('#errorMessage').text('Erreur lors de la récupération des données du client.');
+                $('#errorModal').modal('show');
             }
         });
+
+        loadClients();
     });
 });
+
+

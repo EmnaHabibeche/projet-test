@@ -1,6 +1,6 @@
 <?php
 include_once '../db_connection.php';
-require_once '../models/Client.php';
+require_once '../models/client.php';
 
 $database = new Database();
 $db = $database->getConnection();
@@ -13,15 +13,13 @@ if (isset($_POST['id'])) {
     exit;
 }
 
-$client->id = isset($_POST['id']) ? $_POST['id'] : null;
-$client->prenom = isset($_POST['prenom']) ? $_POST['prenom'] : null;
-$client->nom = isset($_POST['nom']) ? $_POST['nom'] : null;
-$client->numtel = isset($_POST['numtel']) ? $_POST['numtel'] : null;
-$client->pays = isset($_POST['pays']) ? $_POST['pays'] : null;
+$client->prenom = $_POST['prenom'];
+$client->nom = $_POST['nom'];
+$client->numtel = $_POST['numtel'];
+$client->pays = $_POST['pays'];
 
-// Check if a new photo was uploaded
 if (isset($_FILES['photo']) && $_FILES['photo']['error'] == 0) {
-    $targetDir = "../resources/clients/";
+    $targetDir = "../resources/clients/{$client->id}/";
     if (!is_dir($targetDir)) {
         mkdir($targetDir, 0777, true);
     }
@@ -32,10 +30,6 @@ if (isset($_FILES['photo']) && $_FILES['photo']['error'] == 0) {
         echo json_encode(['status' => 'error', 'message' => 'Failed to upload photo']);
         exit;
     }
-} else if (isset($_POST['existing_photo'])) {
-    $client->photo = $_POST['existing_photo'];
-} else {
-    $client->photo = null;
 }
 
 if ($client->update()) {
