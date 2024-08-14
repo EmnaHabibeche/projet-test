@@ -4,7 +4,6 @@ require_once '../models/client.php';
 
 header('Content-Type: application/json');
 
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $database = new Database();
     $db = $database->getConnection();
@@ -15,27 +14,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $client->numtel = htmlspecialchars($_POST['numtel']);
     $client->pays = htmlspecialchars($_POST['pays']);
 
-    // Initialize photo path
-    $client->photo = null;
-
-    // Process photo upload
-    if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
-        $photoPath = uploadPhoto($_FILES['photo']);
-        if ($photoPath) {
-            $client->photo = $photoPath;
+    // Create client without photo first
+    $newClientId = $client->create();
+    
+    if ($newClientId) {
+        // Process photo upload if client creation was successful
+        if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
+            $photoPath = $client->uploadPhoto($_FILES['photo'], $newClientId);
+            if ($photoPath) {
+                $client->photo = $photoPath;
+                $client->id = $newClientId;
+                if ($client->updatePhoto($newClientId)) {
+                    echo json_encode(['status' => 'success', 'message' => 'Client added successfully with photo']);
+                } else {
+                    echo json_encode(['status' => 'warning', 'message' => 'Client added but photo update failed']);
+                }
+            } else {
+                echo json_encode(['status' => 'warning', 'message' => 'Client added but photo upload failed']);
+            }
         } else {
-            echo json_encode(['status' => 'error', 'message' => 'Photo upload failed']);
-            exit;
+            echo json_encode(['status' => 'success', 'message' => 'Client added successfully without photo']);
         }
-    }
-    if ($client->create()) {
-        echo json_encode(['status' => 'success', 'message' => 'Client added successfully']);
     } else {
         echo json_encode(['status' => 'error', 'message' => 'Error creating client']);
     }
 }
-
-
 ?>
-
-
