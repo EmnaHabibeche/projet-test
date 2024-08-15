@@ -81,9 +81,12 @@
                             <div class="form-group">
                                 <label for="photo">Photo</label>
                                 <div class="drag-drop-zone" id="dragDropZone">
+                                <!-- <input type="file" name="photo" style="display: none;">    -->
                                     Glissez-déposez ou cliquez pour télécharger
                                 </div>
-                                <input type="file" name="photo">                        </div>
+                                <input type="file" id="photo" name="photo" style="display: none;">
+
+                                                   </div>
                             <div class="form-group text-right">
                                 <button type="button" class="btn annuler" id="cancelButton">Annuler</button>
                                 <button type="submit" class="btn ajouter">Ajouter</button>
@@ -164,48 +167,49 @@
 
     <script>
     $(document).ready(function() {
-        // Drag and drop functionality
-        $('#dragDropZone').on('click', function() {
-            $('#photo').click();
-        });
-
-        $('#photo').on('change', function(event) {
-            var fileName = event.target.files[0].name;
-            $('#dragDropZone').text(fileName);
-        });
-
-        // Prevent default behavior for dragover and drop events
-        $('#dragDropZone').on('dragover', function(event) {
-            event.preventDefault();
-            event.stopPropagation();
-            $(this).addClass('dragover');
-        });
-
-        $('#dragDropZone').on('dragleave', function(event) {
-            event.preventDefault();
-            event.stopPropagation();
-            $(this).removeClass('dragover');
-        });
-
-        $('#dragDropZone').on('drop', function(event) {
-            event.preventDefault();
-            event.stopPropagation();
-            $(this).removeClass('dragover');
-
-            var files = event.originalEvent.dataTransfer.files;
-            if (files.length > 0) {
-                var file = files[0];
-                $('#photo')[0].files = files; // Assign the dropped file to the file input
-                $('#dragDropZone').text(file.name); // Display the file name in the drag-drop zone
-            }
-        });
-
-        // Cancel button functionality
-        $('#cancelButton').on('click', function() {
-            $('#addClientForm')[0].reset();
-            $('#dragDropZone').text('Glissez-déposez ou cliquez pour télécharger');
-        });
+    // Drag and drop functionality
+    $('#dragDropZone').on('click', function() {
+        $('#photo').click();
     });
+
+    $('#photo').on('change', function(event) {
+        var fileName = event.target.files[0].name;
+        $('#dragDropZone').text(fileName);
+    });
+
+    // Prevent default behavior for dragover and drop events
+    $('#dragDropZone').on('dragover', function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        $(this).addClass('dragover');
+    });
+
+    $('#dragDropZone').on('dragleave', function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        $(this).removeClass('dragover');
+    });
+
+    $('#dragDropZone').on('drop', function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        $(this).removeClass('dragover');
+
+        var files = event.originalEvent.dataTransfer.files;
+        if (files.length > 0) {
+            var file = files[0];
+            $('#photo')[0].files = files; // Assign the dropped file to the file input
+            $('#dragDropZone').text(file.name); // Display the file name in the drag-drop zone
+        }
+    });
+
+    // Cancel button functionality
+    $('#cancelButton').on('click', function() {
+        $('#addClientForm')[0].reset();
+        $('#dragDropZone').text('Glissez-déposez ou cliquez pour télécharger');
+    });
+});
+
 
     </script>
     <script>
