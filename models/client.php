@@ -123,15 +123,35 @@
         public function delete() {
             $query = "DELETE FROM " . $this->table_name . " WHERE id = :id";
             $stmt = $this->conn->prepare($query);
-
+            
             $stmt->bindParam(':id', $this->id);
-
+            
             if ($stmt->execute()) {
+                // Delete the client's folder
+                $clientFolder = "../resources/clients/" . $this->id;
+                if (is_dir($clientFolder)) {
+                    $this->removeDirectory($clientFolder);
+                }
                 return true;
             }
             return false;
         }
-
+        
+        private function removeDirectory($dir) {
+            if (is_dir($dir)) {
+                $objects = scandir($dir);
+                foreach ($objects as $object) {
+                    if ($object != "." && $object != "..") {
+                        if (is_dir($dir . "/" . $object)) {
+                            $this->removeDirectory($dir . "/" . $object);
+                        } else {
+                            unlink($dir . "/" . $object);
+                        }
+                    }
+                }
+                rmdir($dir);
+            }
+        }
         
         
         
