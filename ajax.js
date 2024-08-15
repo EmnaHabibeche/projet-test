@@ -12,6 +12,9 @@ $(document).ready(function() {
                     clientList.empty();
             
                     response.forEach(function(client) {
+                        console.log('Client object:', client);
+
+                        console.log('Image URL:', client.photo); 
                         var clientCard = `
                         <div id="clientContainer">
                             <div class="client-card">
@@ -46,50 +49,52 @@ $(document).ready(function() {
     }
 
     loadClients();
-    $('#addClientForm').on('submit', function(event) {
-        event.preventDefault();
-        var formData = new FormData(this);
-        var clientId = $('#addClientForm').attr('data-id');
-        var url = clientId ? 'controllers/updateClient-controller.php' : 'controllers/addClient-controller.php';
-        
-        if (clientId) {
-            formData.append('id', clientId);
-        }
+// Handle form submission
+$('#addClientForm').on('submit', function(event) {
+    event.preventDefault();
+    var formData = new FormData(this);
+    var clientId = $('#addClientForm').attr('data-id');
+    var url = clientId ? 'controllers/updateClient-controller.php' : 'controllers/addClient-controller.php';
     
-        $.ajax({
-            url: url,
-            type: 'POST',
-            data: formData,
-            contentType: false,
-            processData: false,
-            success: function(response) {
-                try {
-                    var res = JSON.parse(response);
-                    var notification = $('#notification');
-                    if (res.status === 'success') {
-                        notification.removeClass('alert-danger').addClass('alert-success').text(res.message).show();
-                        $('#addClientForm')[0].reset();
-                        $('#addClientForm').removeAttr('data-id');
-                        $('.ajouter').text('Ajouter');
-                        $('#dragDropZone').text('Glissez-déposez ou cliquez pour télécharger');
-                        loadClients();
-                    } else {
-                        notification.removeClass('alert-success').addClass('alert-danger').text(res.message).show();
-                    }
-                    setTimeout(function() {
-                        notification.fadeOut();
-                    }, 5000);
-                } catch (e) {
-                    console.error('Error parsing JSON response:', e);
-                    console.log('Response:', response);
-                    $('#notification').removeClass('alert-success').addClass('alert-danger').text("Erreur lors de l'opération.").show();
-setTimeout(function() {
-    $('#notification').fadeOut();
-}, 5000); 
+    if (clientId) {
+        formData.append('id', clientId);
+    }
+
+    $.ajax({
+        url: url,
+        type: 'POST',
+        data: formData,
+        contentType: false,
+        processData: false,
+        success: function(response) {
+            try {
+                var res = JSON.parse(response);
+                var notification = $('#notification');
+                if (res.status === 'success') {
+                    notification.removeClass('alert-danger').addClass('alert-success').text(res.message).show();
+                    $('#addClientForm')[0].reset();
+                    $('#addClientForm').removeAttr('data-id');
+                    $('.ajouter').text('Ajouter');
+                    $('#dragDropZone').text('Glissez-déposez ou cliquez pour télécharger');
+                    loadClients();
+                } else {
+                    notification.removeClass('alert-success').addClass('alert-danger').text(res.message).show();
                 }
+                setTimeout(function() {
+                    notification.fadeOut();
+                }, 5000);
+            } catch (e) {
+                console.error('Error parsing JSON response:', e);
+                console.log('Response:', response);
+                $('#notification').removeClass('alert-success').addClass('alert-danger').text("Erreur lors de l'opération.").show();
+setTimeout(function() {
+$('#notification').fadeOut();
+}, 5000); 
             }
-        });
+        }
     });
+});
+
     loadClients();
 
     
