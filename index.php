@@ -33,7 +33,7 @@
                     </li>
                 </ul>
                 <span class="navbar-brand ml-auto">
-                    <img src="resources/graphics/logo.png" alt="Logo" style="height: 60px; width: auto; margin-left: 20px; float: right;">
+                    <img src="resources/graphics/logo.png" alt="Logo" style="height: 60px; width: auto; margin-left: 700px; float: right;">
                 </span>
             </div>
         </div>
