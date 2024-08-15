@@ -2,7 +2,7 @@
 require_once '../db_connection.php';
 require_once '../models/client.php';
 
-header('Content-Type: application/json');
+
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $database = new Database();

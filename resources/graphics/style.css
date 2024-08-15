@@ -214,3 +214,12 @@ button.ajouter {
 .client-actions .deleteClientIcon {
     color: #000000;
 }
+#notification {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    min-width: 300px;
+    text-align: center;
+}

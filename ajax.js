@@ -93,45 +93,66 @@ $('#notification').fadeOut();
             }
         }
     });
+    loadClients();
 });
 
     loadClients();
 
+    $(document).ready(function() {
+        // Confirm Deletion
+        $('#confirmDeleteBtn').on('click', function() {
+            var id = $(this).data('id');
+            console.log("Confirm delete button clicked");
+            console.log("Confirming delete for client ID:", id);
+            
+            var confirmDeleteModal = new bootstrap.Modal(document.getElementById('confirmDeleteModal'));
+            
+            $.ajax({
+                url: 'controllers/deleteClient-controller.php',
+                type: 'POST',
+                data: { id: id },
+                success: function(response) {
+                    console.log("Raw response:", response); // Debugging
+                    try {
+                        var res = JSON.parse(response);
+                        console.log("Parsed response:", res); // Debugging
+                        if (res.status === 'success') {
+                            // Hide the modal before showing the notification
+                            confirmDeleteModal.hide();
     
-    
-
-    // Delete Client
-    $(document).on('click', '.deleteClientIcon', function() {
-        var id = $(this).data('id');
-
-        $.ajax({
-            url: 'controllers/deleteClient-controller.php', // Send the ID to the controller
-            type: 'POST',
-            data: {id: id},
-            success: function(response) {
-                try {
-                    var res = JSON.parse(response);
-                    var notification = $('#notification');
-                    if (res.status === 'success') {
-                        notification.removeClass('alert-danger').addClass('alert-success').text(res.message).show();
-                        loadClients(); // Reload the client list
-                    } else {
-                        notification.removeClass('alert-success').addClass('alert-danger').text(res.message).show();
+                            // Delay the notification to ensure modal hides first
+                            setTimeout(function() {
+                                showNotification(res.message, true);
+                                loadClients(); // Reload the client list
+                            }, 300);
+                        } else {
+                            showNotification(res.message, false);
+                        }
+                    } catch (e) {
+                        console.error('Error parsing JSON response:', e);
+                        console.log('Response:', response);
+                        showNotification('Erreur lors de la suppression du client.', false);
                     }
-                    setTimeout(function() {
-                        notification.fadeOut();
-                    }, 5000); // Hide notification after 5 seconds
-                } catch (e) {
-                    console.error('Error parsing JSON response:', e);
-                    console.log('Response:', response);
-                    $('#notification').removeClass('alert-success').addClass('alert-danger').text('Erreur lors de la suppression du client.').show();
-                    setTimeout(function() {
-                        $('#notification').fadeOut();
-                    }, 5000); // Hide notification after 5 seconds
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', status, error);
+                    console.log('Response Text:', xhr.responseText); 
+                    console.log('Status Code:', xhr.status);
+                    showNotification('Erreur lors de la suppression du client.', false);
                 }
-            }
+            });
+        });
+    
+        // Show the modal when the delete icon is clicked
+        $(document).on('click', '.deleteClientIcon', function() {
+            var id = $(this).data('id');
+            console.log('Delete icon clicked. Client ID:', id);
+            $('#confirmDeleteModal').modal('show');
+            $('#confirmDeleteBtn').data('id', id);
         });
     });
+    
+    
 
     $(document).on('click', '.editClientIcon', function() {
         var id = $(this).data('id');
@@ -159,5 +180,14 @@ $('#notification').fadeOut();
         loadClients();
     });
 });
-
+function showNotification(message, isSuccess) {
+    var notificationElement = $('#notification');
+    notificationElement.text(message);
+    notificationElement.removeClass('alert-success alert-danger');
+    notificationElement.addClass(isSuccess ? 'alert-success' : 'alert-danger');
+    notificationElement.show();
+    setTimeout(function() {
+        notificationElement.fadeOut();
+    }, 5000);
+}
 
