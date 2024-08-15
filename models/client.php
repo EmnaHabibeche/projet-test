@@ -38,7 +38,18 @@
             return false;
         }
 
-    
+        public function clientExists() {
+            $query = "SELECT COUNT(*) FROM " . $this->table_name . " WHERE prenom = :prenom AND nom = :nom AND numtel = :numtel";
+            $stmt = $this->conn->prepare($query);
+            
+            $stmt->bindParam(':prenom', $this->prenom);
+            $stmt->bindParam(':nom', $this->nom);
+            $stmt->bindParam(':numtel', $this->numtel);
+            
+            $stmt->execute();
+            
+            return $stmt->fetchColumn() > 0;
+        }
         public function uploadPhoto($file, $clientId) {
             // Define the upload directory
             $target_dir = "../resources/clients/" . $clientId . "/";
