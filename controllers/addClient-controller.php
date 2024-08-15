@@ -13,7 +13,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $client->nom = htmlspecialchars($_POST['nom']);
     $client->numtel = htmlspecialchars($_POST['numtel']);
     $client->pays = htmlspecialchars($_POST['pays']);
-
+    
+    if ($client->exists()) {
+        echo json_encode(['status' => 'error', 'message' => 'Client already exists']);
+        exit();
+    }
     // Create client without photo first
     $newClientId = $client->create();
     
