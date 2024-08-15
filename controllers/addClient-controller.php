@@ -1,6 +1,8 @@
 <?php
+
 require_once '../db_connection.php';
 require_once '../models/client.php';
+
 
 
 
@@ -13,11 +15,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $client->nom = htmlspecialchars($_POST['nom']);
     $client->numtel = htmlspecialchars($_POST['numtel']);
     $client->pays = htmlspecialchars($_POST['pays']);
-    
-    if ($client->exists()) {
+    if ($client->clientExists()) {
         echo json_encode(['status' => 'error', 'message' => 'Client already exists']);
-        exit();
+        exit;
     }
+    
     // Create client without photo first
     $newClientId = $client->create();
     

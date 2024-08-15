@@ -5,7 +5,7 @@
 
         public $id;
         public $prenom;
-        public $nom;
+        public $nom;    
         public $numtel;
         public $pays;
         public $photo;
@@ -13,6 +13,7 @@
         public function __construct($db) {
             $this->conn = $db;
         }
+   
         public function create() {
             $query = "INSERT INTO client (prenom, nom, numtel, pays) VALUES (:prenom, :nom, :numtel, :pays)";
             $stmt = $this->conn->prepare($query);
@@ -36,6 +37,8 @@
         
             return false;
         }
+
+    
         public function uploadPhoto($file, $clientId) {
             // Define the upload directory
             $target_dir = "../resources/clients/" . $clientId . "/";
@@ -96,8 +99,12 @@
                 $stmt->bindParam(':photo', $this->photo);
             }
         
-            if ($stmt->execute()) {
-                return true;
+            try {
+                if ($stmt->execute()) {
+                    return true;
+                }
+            } catch (PDOException $e) {
+                error_log("Update error: " . $e->getMessage());
             }
             return false;
         }
